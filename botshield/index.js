@@ -9,14 +9,18 @@ const requestLogs = {};
 // Store blocked IPs with time
 const blockedIPs = {};
 
-// Normal route
+// =======================
+// NORMAL ROUTE
+// =======================
 app.get("/", (req, res) => {
   const ip = req.ip;
   const currentTime = Date.now();
 
+  // Check if blocked
   if (blockedIPs[ip]) {
     const blockTime = blockedIPs[ip];
 
+    // Auto unblock after 30 seconds
     if (currentTime - blockTime > 30000) {
       delete blockedIPs[ip];
       requestLogs[ip] = [];
@@ -25,16 +29,20 @@ app.get("/", (req, res) => {
     }
   }
 
+  // Initialize logs
   if (!requestLogs[ip]) {
     requestLogs[ip] = [];
   }
 
+  // Add request
   requestLogs[ip].push(currentTime);
 
+  // Keep only last 10 seconds
   requestLogs[ip] = requestLogs[ip].filter(
     (time) => currentTime - time < 10000
   );
 
+  // Block if too many requests
   if (requestLogs[ip].length > 10) {
     blockedIPs[ip] = currentTime;
     return res.send("🚫 Blocked: Too many requests. Wait 30 seconds.");
@@ -43,14 +51,18 @@ app.get("/", (req, res) => {
   res.send(`Hello! Requests in last 10s: ${requestLogs[ip].length}`);
 });
 
-// API route
+// =======================
+// BOT CHECK API (MAIN PRODUCT)
+// =======================
 app.post("/check-bot", (req, res) => {
   const ip = req.body.ip || req.ip;
   const currentTime = Date.now();
 
+  // Check if blocked
   if (blockedIPs[ip]) {
     const blockTime = blockedIPs[ip];
 
+    // Auto unblock after 30 seconds
     if (currentTime - blockTime > 30000) {
       delete blockedIPs[ip];
       requestLogs[ip] = [];
@@ -59,16 +71,20 @@ app.post("/check-bot", (req, res) => {
     }
   }
 
+  // Initialize logs
   if (!requestLogs[ip]) {
     requestLogs[ip] = [];
   }
 
+  // Add request
   requestLogs[ip].push(currentTime);
 
+  // Keep only last 10 seconds
   requestLogs[ip] = requestLogs[ip].filter(
     (time) => currentTime - time < 10000
   );
 
+  // Block condition
   if (requestLogs[ip].length > 10) {
     blockedIPs[ip] = currentTime;
     return res.json({ status: "blocked" });
@@ -77,6 +93,11 @@ app.post("/check-bot", (req, res) => {
   return res.json({ status: "allowed" });
 });
 
-app.listen(3000, () => {
-  console.log("Server running on port 3000");
+// =======================
+// SERVER START (IMPORTANT FOR DEPLOYMENT)
+// =======================
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
