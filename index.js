@@ -7,7 +7,7 @@ app.use(express.json());
 // HOME ROUTE
 // =======================
 app.get("/", (req, res) => {
-  res.send("BotShield Level 7 running 🚀");
+  res.send("BotShield Live 🚀");
 });
 
 // =======================
@@ -38,7 +38,9 @@ app.post("/check-bot", (req, res) => {
     return res.json({ status: "error", message: "Invalid API Key" });
   }
 
-  const ip = req.body.ip || req.ip;
+  // ✅ REAL IP (IMPORTANT FIX)
+  const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+
   const userAgent = (req.headers["user-agent"] || "").toLowerCase();
   const path = req.body.path || "/";
   const currentTime = Date.now();
@@ -126,9 +128,6 @@ app.post("/check-bot", (req, res) => {
     time: new Date().toISOString()
   });
 
-  // =======================
-  // RESPONSE
-  // =======================
   return res.json({ status, score });
 });
 
@@ -238,10 +237,10 @@ app.get("/dashboard-ui", (req, res) => {
 });
 
 // =======================
-// SERVER START
+// SERVER START (RAILWAY FIX)
 // =======================
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
 });
